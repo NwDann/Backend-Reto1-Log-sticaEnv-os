@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 from .database.core import engine, Base
 from .logging import configure_logging, LogLevels
@@ -47,9 +48,14 @@ origins = [
     "http://127.0.0.1:8000",
 ]
 
+# Añadicion de dominio frontend
+extra = os.environ.get("CORS_ORIGINS", "")
+if extra:
+    origins.extend([o.strip() for o in extra.split(",") if o.strip()])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins if origins else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
