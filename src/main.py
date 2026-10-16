@@ -41,6 +41,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# En producción permite el origen del frontend; en local los típicos de Vite
 origins = [
     "http://localhost:5173",
     "http://localhost:8000",
