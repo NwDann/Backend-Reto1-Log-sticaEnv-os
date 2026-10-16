@@ -29,7 +29,7 @@ from .controllers import (
 
 configure_logging(LogLevels.info)
 
-# Crear tablas si no existen
+# Crear tablas si no existen (en Supabase ya las tienes; es idempotente)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -47,8 +47,7 @@ origins = [
     "http://127.0.0.1:5173",
     "http://127.0.0.1:8000",
 ]
-
-# Añadicion de dominio frontend
+# Añade tu dominio de frontend si lo tienes (ej. Vercel)
 extra = os.environ.get("CORS_ORIGINS", "")
 if extra:
     origins.extend([o.strip() for o in extra.split(",") if o.strip()])
@@ -61,7 +60,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Registrar routers
 app.include_router(insumo_router)
 app.include_router(inventario_router)
 app.include_router(punto_servicio_router)
