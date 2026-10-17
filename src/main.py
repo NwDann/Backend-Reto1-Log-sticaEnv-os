@@ -6,21 +6,26 @@ from .database.core import engine, Base
 from .logging import configure_logging, LogLevels
 
 # Importar entidades para que Base las registre
-from .entities.insumo import Insumo
-from .entities.puntos_servicio import PuntoServicio
-from .entities.personal import Personal
-from .entities.ruta import Ruta
-from .entities.despacho import Despacho
-from .entities.contrato import Contrato
+from .entities import (  # noqa: F401
+    Insumo,
+    PuntoServicio,
+    Personal,
+    Ruta,
+    Despacho,
+    DetalleDespacho,
+    Contrato,
+)
 
-from .controllers.insumo_ctrl import router as insumo_router
-from .controllers.inventario_ctrl import router as inventario_router
-from .controllers.punto_servicio_ctrl import router as punto_servicio_router
-from .controllers.personal_ctrl import router as personal_router
-from .controllers.ruta_ctrl import router as ruta_router
-from .controllers.despacho_ctrl import router as despacho_router
-from .controllers.contrato_ctrl import router as contrato_router
-from .controllers.kpi_ctrl import router as kpi_router
+from .controllers import (
+    insumo_router,
+    inventario_router,
+    punto_servicio_router,
+    personal_router,
+    ruta_router,
+    despacho_router,
+    contrato_router,
+    kpi_router,
+)
 
 configure_logging(LogLevels.info)
 
