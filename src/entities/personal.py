@@ -3,7 +3,6 @@ from sqlalchemy import (
     Integer,
     String,
     Boolean,
-    Enum as PgEnum,
 )
 from sqlalchemy.orm import relationship
 from enum import Enum
@@ -20,8 +19,9 @@ class Personal(Base):
     __tablename__ = "personal"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    nombre = Column(String, nullable=False)
-    especialidad = Column(PgEnum(EspecialidadPersonal), default=EspecialidadPersonal.GENERAL, nullable=False)
+    nombre = Column(String(255), nullable=False)
+    # VARCHAR para alinear con CHECK del esquema
+    especialidad = Column(String(50), default=EspecialidadPersonal.GENERAL.value, nullable=False)
     acreditado = Column(Boolean, default=True, nullable=False)
     disponible = Column(Boolean, default=True, nullable=False)
 

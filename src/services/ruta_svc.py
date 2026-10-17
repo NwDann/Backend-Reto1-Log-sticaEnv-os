@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 from ..entities.ruta import Ruta, EstadoRuta
 from ..entities.contrato import Contrato
 from ..entities.despacho import Despacho
@@ -8,9 +8,8 @@ from ..models.ruta_mdl import (
     RutaUpdate,
     RutaResponse,
     ActualizarEstadoRutaRequest,
-    EstadoRutaEnum,
 )
-from ..exceptions import RutaNotFoundError, EstadoRutaInvalidoError, ValidationError
+from ..exceptions import RutaNotFoundError, EstadoRutaInvalidoError
 
 
 class RutaService:
@@ -28,7 +27,10 @@ class RutaService:
 
     @staticmethod
     def create(db: Session, data: RutaCreate) -> RutaResponse:
-        ruta = Ruta(**data.model_dump())
+        payload = data.model_dump()
+        # estado por defecto
+        payload["estado"] = EstadoRuta.PLANIFICADA.value
+        ruta = Ruta(**payload)
         db.add(ruta)
         db.commit()
         db.refresh(ruta)
@@ -42,7 +44,9 @@ class RutaService:
         for field, value in data.model_dump(exclude_unset=True).items():
             if field == "estado" and value is not None:
                 try:
-                    value = EstadoRuta(value.value if hasattr(value, "value") else value)
+                    value = value.value if hasattr(value, "value") else value
+                    # validar que sea un estado permitido
+                    EstadoRuta(value)
                 except ValueError:
                     raise EstadoRutaInvalidoError(str(value))
             setattr(ruta, field, value)
@@ -63,12 +67,13 @@ class RutaService:
             raise RutaNotFoundError(ruta_id)
 
         try:
-            nuevo_estado = EstadoRuta(data.estado.value)
+            nuevo_estado_val = data.estado.value if hasattr(data.estado, "value") else data.estado
+            EstadoRuta(nuevo_estado_val)  # valida
         except ValueError:
-            raise EstadoRutaInvalidoError(data.estado.value)
+            raise EstadoRutaInvalidoError(str(data.estado))
 
-        estado_anterior = ruta.estado.value if hasattr(ruta.estado, "value") else str(ruta.estado)
-        ruta.estado = nuevo_estado
+        estado_anterior = ruta.estado if isinstance(ruta.estado, str) else str(ruta.estado)
+        ruta.estado = nuevo_estado_val
 
         adendas_registradas = []
         if data.tiene_adenda or data.notas_imprevisto:
@@ -79,14 +84,17 @@ class RutaService:
                     db.query(Contrato)
                     .filter(
                         Contrato.punto_servicio_id == d.punto_servicio_id,
-                        Contrato.vigente == True,
+                        Contrato.vigente == True,  # noqa: E712
                     )
                     .all()
                 )
                 for c in contratos:
                     c.tiene_adenda = True
                     if data.notas_imprevisto:
-                        extra = f"\n[Adenda ruta {ruta_id} - {estado_anterior}→{nuevo_estado.value}]: {data.notas_imprevisto}"
+                        extra = (
+                            f"\n[Adenda ruta {ruta_id} - {estado_anterior}→{nuevo_estado_val}]: "
+                            f"{data.notas_imprevisto}"
+                        )
                         c.detalles_acuerdo = (c.detalles_acuerdo or "") + extra
                     adendas_registradas.append(c.id)
 
@@ -96,7 +104,7 @@ class RutaService:
         return {
             "ruta_id": ruta.id,
             "estado_anterior": estado_anterior,
-            "estado_nuevo": nuevo_estado.value,
+            "estado_nuevo": nuevo_estado_val,
             "adendas_actualizadas": adendas_registradas,
             "notas": data.notas_imprevisto,
             "ruta": RutaResponse.model_validate(ruta),

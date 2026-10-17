@@ -25,7 +25,10 @@ class PersonalService:
 
     @staticmethod
     def create(db: Session, data: PersonalCreate) -> PersonalResponse:
-        p = Personal(**data.model_dump())
+        payload = data.model_dump()
+        if hasattr(payload.get("especialidad"), "value"):
+            payload["especialidad"] = payload["especialidad"].value
+        p = Personal(**payload)
         db.add(p)
         db.commit()
         db.refresh(p)
@@ -37,6 +40,8 @@ class PersonalService:
         if not p:
             raise PersonalNotFoundError(personal_id)
         for field, value in data.model_dump(exclude_unset=True).items():
+            if field == "especialidad" and value is not None and hasattr(value, "value"):
+                value = value.value
             setattr(p, field, value)
         db.commit()
         db.refresh(p)
@@ -64,15 +69,16 @@ class PersonalService:
         """
         query = db.query(Personal)
         if requiere_acreditado:
-            query = query.filter(Personal.acreditado == True)
+            query = query.filter(Personal.acreditado == True)  # noqa: E712
         if solo_disponibles:
-            query = query.filter(Personal.disponible == True)
+            query = query.filter(Personal.disponible == True)  # noqa: E712
         if especialidad:
             try:
-                esp = EspecialidadPersonal(especialidad)
-                query = query.filter(Personal.especialidad == esp)
+                # aceptar tanto el valor del enum como el string
+                esp_val = EspecialidadPersonal(especialidad).value
+                query = query.filter(Personal.especialidad == esp_val)
             except ValueError:
-                pass  # especialidad inválida se ignora, se devuelve todo acreditado
+                pass  # especialidad inválida se ignora
 
         personal = query.all()
         return ValidarAcreditacionResponse(

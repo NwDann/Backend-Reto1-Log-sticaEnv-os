@@ -13,8 +13,8 @@ class DetalleDespacho(Base):
     __tablename__ = "detalle_despachos"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    despacho_id = Column(Integer, ForeignKey("despachos.id"), nullable=False)
-    insumo_id = Column(Integer, ForeignKey("insumos.id"), nullable=False)
+    despacho_id = Column(Integer, ForeignKey("despachos.id", ondelete="CASCADE"), nullable=False)
+    insumo_id = Column(Integer, ForeignKey("insumos.id", ondelete="RESTRICT"), nullable=False)
     cantidad_solicitada = Column(Float, nullable=False)
     es_promocion = Column(Boolean, default=False, nullable=False)
 

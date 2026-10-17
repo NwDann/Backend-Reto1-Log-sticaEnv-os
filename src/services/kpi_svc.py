@@ -1,8 +1,6 @@
-from sqlalchemy.orm import Session
-from datetime import datetime
+from sqlalchemy.orm import Session, joinedload
 from ..entities.ruta import Ruta, EstadoRuta
 from ..entities.despacho import Despacho
-from ..entities.detalle_despacho import DetalleDespacho
 from ..entities.contrato import Contrato
 from ..entities.insumo import Insumo
 from ..models.kpi_mdl import KPIResumenResponse
@@ -19,8 +17,8 @@ class KPIService:
         - Cumplimiento de Contratos
         """
         rutas = db.query(Ruta).all()
-        despachos = db.query(Despacho).all()
-        contratos = db.query(Contrato).all()
+        despachos = db.query(Despacho).options(joinedload(Despacho.detalles)).all()
+        contratos = db.query(Contrato).options(joinedload(Contrato.punto_servicio)).all()
 
         total_rutas = len(rutas)
         total_despachos = len(despachos)
@@ -54,7 +52,7 @@ class KPIService:
 
         # --- Rentabilidad por Ruta: viajes con valor_mercaderia_total >= 1000 ---
         rutas_rentables = [r for r in rutas if (r.valor_mercaderia_total or 0) >= 1000.0]
-        rutas_completadas = [r for r in rutas if r.estado == EstadoRuta.COMPLETADA]
+        rutas_completadas = [r for r in rutas if r.estado == EstadoRuta.COMPLETADA.value or r.estado == "Completada"]
         pct_rentables = (len(rutas_rentables) / total_rutas * 100) if total_rutas > 0 else 0.0
 
         # --- Tasa de Mermas: simplificado ---
