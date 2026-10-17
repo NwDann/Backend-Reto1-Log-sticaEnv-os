@@ -80,7 +80,7 @@ def root():
             "PATCH /api/rutas/{ruta_id}/estado",
             "GET  /api/insumos/criticos-y-proyeccion",
             "POST /api/inventario/calcular-sugerido",
-            "POST /api/despachos",
+            "POST /api/despachos  (crea orden + opcional descuento de stock + validación capacidad)",
             "PATCH /api/despachos/{despacho_id}/apurar-produccion",
             "GET  /api/personal/validar-acreditacion",
             "GET  /api/kpis/resumen",
